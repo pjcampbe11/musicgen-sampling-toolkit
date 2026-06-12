@@ -303,9 +303,16 @@ def to_markdown(rep):
     return "\n".join(L)
 
 
-def analyze(path, args, out_dir):
+def analyze(path, args, out_dir, rel=None):
     import librosa
     import soundfile as sf
+    # mirror the input's folder structure so same-named tracks from different
+    # albums don't overwrite each other's reports
+    if rel is not None and rel.parent != Path("."):
+        out_dir = out_dir / rel.parent
+    json_path = out_dir / f"{path.stem}.analysis.json"
+    if args.resume and json_path.exists():
+        return "skipped"
     try:
         info = sf.info(str(path))
         file_sr, subtype = info.samplerate, info.subtype
@@ -329,9 +336,10 @@ def analyze(path, args, out_dir):
         rep["layers"]["vibe"] = rep["vibe"].get("skipped", "clap") if isinstance(rep["vibe"], dict) else "clap"
     rep["summary"] = summarize(rep)
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / f"{path.stem}.analysis.json").write_text(json.dumps(rep, indent=2), encoding="utf-8")
-    (out_dir / f"{path.stem}.analysis.md").write_text(to_markdown(rep), encoding="utf-8")
+    json_path.write_text(json.dumps(rep, indent=2), encoding="utf-8")
+    json_path.with_suffix("").with_suffix(".analysis.md").write_text(to_markdown(rep), encoding="utf-8")
     print(f"{path.name}: {rep['summary']}")
+    return "ok"
 
 
 def main():
@@ -340,16 +348,28 @@ def main():
     ap.add_argument("--out", default="reports")
     ap.add_argument("--no-events", action="store_true", help="Skip PANNs sound-event layer")
     ap.add_argument("--no-vibe", action="store_true", help="Skip CLAP mood/genre layer")
+    ap.add_argument("--resume", action="store_true",
+                    help="Skip tracks that already have a report (safe re-run)")
     args = ap.parse_args()
     p = Path(args.input)
     files = [p] if p.is_file() else sorted(x for x in p.rglob("*") if x.suffix.lower() in AUDIO_EXTS)
     if not files:
         sys.exit("No audio found.")
-    for f in files:
+    root = p if p.is_dir() else p.parent
+    ok = skipped = failed = 0
+    for i, f in enumerate(files, 1):
         try:
-            analyze(f, args, Path(args.out))
+            res = analyze(f, args, Path(args.out), rel=f.relative_to(root))
+            if res == "skipped":
+                skipped += 1
+            else:
+                ok += 1
         except Exception as e:
-            print(f"FAILED {f}: {e}")
+            failed += 1
+            print(f"[{i}/{len(files)}] FAILED {f}: {e}")
+    print(f"\n=== {len(files)} files: {ok} analyzed, {skipped} skipped (resume), {failed} failed ===")
+    if failed and any(f.suffix.lower() in {".mp3", ".m4a", ".ogg"} for f in files):
+        print("MP3/M4A failures usually mean ffmpeg is missing:  winget install ffmpeg")
 
 
 if __name__ == "__main__":
