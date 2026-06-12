@@ -1,0 +1,19 @@
+librosa>=0.10.2
+soundfile>=0.12.1
+numpy>=1.26
+pyloudnorm>=0.1.1
+tqdm>=4.66
+torch>=2.3
+torchaudio>=2.3
+einops>=0.7
+# stable-audio-tools is installed from source on the training/generation box:
+#   git clone https://github.com/Stability-AI/stable-audio-tools && pip install -e ./stable-audio-tools
+
+# Optional, per feature:
+#   pedalboard      - 09 VST chains, 16 destroy-heal
+#   python-osc      - 10 Ableton bridge, 18 Push generation server
+#   mido            - 08/10 MIDI
+#   audio-separator[gpu] - 11 vocal removal (BS-RoFormer, default engine)
+#   demucs          - 11 vocal removal (fallback engine)
+#   beat-this       - 14 groove DNA (SOTA beat tracker; librosa fallback)
+#   laion-clap      - 12 curation loop
