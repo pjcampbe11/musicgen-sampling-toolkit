@@ -1,4 +1,4 @@
-# Samplepack Toolkit
+# musicgen-sampling-toolkit
 
 **Architecture:** fine-tune [Stable Audio Open 1.0](https://huggingface.co/stabilityai/stable-audio-open-1.0) (stereo, 44.1 kHz, up to ~47 s per generation) using Stability's [stable-audio-tools](https://github.com/Stability-AI/stable-audio-tools). Dataset prep, post-processing, and pack assembly run on any machine; training runs on a rented cloud GPU; generation runs on any ~8 GB+ NVIDIA GPU or cloud.
 
@@ -456,3 +456,11 @@ Optional deeper cuts on the platform: anything current on **MLOps/model serving*
 - Meta AI blog - audiocraft/MusicGen lineage
 - arXiv `cs.SD` (sound) - skim weekly titles; you only need the ~5/year that matter
 
+Deep Listen - 23_deep_listen.py
+
+Learn everything possible about any WAV/MP3: technical truth (sample rate, encoding, LUFS, crest/dynamics, stereo correlation, clipping, DC offset, band-by-band spectrum, lossy-upsample detection), musical analysis (BPM + tempo stability via beat_this/librosa, key + confidence, onset density, structure boundaries, energy arc), sound identification - every detectable event with timestamps across AudioSet's 527 classes via PANNs (pip install panns-inference), and mood/feeling - CLAP zero-shot scoring against mood/genre/instrument/production vocabularies (pip install laion-clap). Each layer degrades gracefully if its model isn't installed; reports state what ran. Outputs per-file .analysis.json + .analysis.md.
+
+```
+python scripts/23_deep_listen.py --input track.mp3 --out reports/
+python scripts/23_deep_listen.py --input "F:/Sound Bank Organized/drums_loops" --out reports/   # batch
+```
